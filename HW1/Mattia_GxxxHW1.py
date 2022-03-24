@@ -1,6 +1,7 @@
 from sys import argv
 from pyspark import SparkContext
 from operator import add
+from collections import Counter
 
 def split_and_filter(S):
     def _(line):
@@ -12,15 +13,13 @@ def split_and_filter(S):
     return _
 
 def count(kv):
-    out = {}
+    return Counter(k for k, v in kv).items()
 
-    for k, v in kv:
-        if k in out:
-            out[k] += 1
-        else:
-            out[k] = 1
+def dump(pp, colon=True):
+    colon = ':' if colon else ''
 
-    return out.items()
+    for pid, pop in pp:
+        print(f"Product{colon} {pid.decode('ascii')} Popularity{colon} {pop}; ", end="")
 
 def main():
     K, H, S, dataset = argv[1:]
@@ -28,10 +27,13 @@ def main():
     H = int(H)
 
     sc = SparkContext()
+    sc.setLogLevel("ERROR")
     S = sc.broadcast(S)
 
     rawData = sc.textFile(dataset, minPartitions=K, use_unicode=False) \
                 .repartition(K)
+
+    print(f"Number of rows = {rawData.count()}")
 
     productCustomer = rawData.flatMap(split_and_filter(S)) \
                              .reduceByKey(lambda X, Y: None) \
@@ -39,22 +41,22 @@ def main():
                              .partitionBy(K) # <-- this step could be removed
                                              #     if we only cared about pP2
 
+    print(f"Product-Customer Pairs = {productCustomer.count()}")
+
     productPopularity1 = productCustomer.mapPartitions(count)
 
     productPopularity2 = productCustomer.map(lambda X: (X[0], 1)) \
                                         .reduceByKey(add)
 
     if H > 0:
-        for pair in productPopularity1.top(H, key=lambda X: X[1]):
-            print(pair)
+        print(f"Top {H} Products and their Popularities")
+        dump(productPopularity1.top(H, key=lambda X: X[1]), colon=False)
     else:
-        for pair in productPopularity1.collect():
-            print(pair)
-
-        print("---")
-
-        for pair in productPopularity2.collect():
-            print(pair)
+        print("productPopularity1: ")
+        dump(productPopularity1.sortByKey().collect())
+        print("\nproductPopularity2: ")
+        dump(productPopularity2.sortByKey().collect())
+        print()
 
 if __name__ == "__main__":
     main()
