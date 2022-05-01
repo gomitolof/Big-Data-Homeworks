@@ -1,0 +1,8 @@
+Input size n = 959
+Number of centers k = 10
+Number of outliers z = 100
+Initial guess = 1.1180339887711215E-4
+Final guess = 0.007155417528135178
+Number of guesses = 7
+Objective function = 0.02143944961980124
+Time of SeqWeightedOutliers = 944
