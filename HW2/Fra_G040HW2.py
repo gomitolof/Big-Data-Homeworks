@@ -27,16 +27,23 @@ def euclideanWithoutSqrt(point1,point2):
 
 def SeqWeightedOutliers(P, W, k, z, alpha):
     N = len(P)
-    fist_dist = []
+    distances = {}
+    ind = 0
+    min_dist = 1000
+    # create the dictionary that contains all the euclidean distances between points
+    # without computing the square root
     distances = np.zeros((N,N))
     for i in range(N):
         for j in range(i+1, N):
-            distances[i][j] = euclidean(P[i], P[j])
-            distances[j][i] = distances[i][j]
-            if len(fist_dist) <= k + z:
-                fist_dist.append(distances[i][j])
-    # r shoudl be equal to (the min distance between first k + z + 1 points)/2
-    r = min(fist_dist)/2
+            dist = euclideanWithoutSqrt(P[i], P[j])
+            distances[i][j] = dist
+            distances[j][i] = dist
+            if ind <= k + z:
+                if dist < min_dist:
+                    min_dist = dist
+                ind += 1
+    # r shoudl be equal to (the min euclidean distance between first k + z + 1 points)/2
+    r = math.sqrt(min_dist)/2
     print("Initial guess =", r)
     Wz = z + 1
     guesses = 0
@@ -46,7 +53,9 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
         S = []
         Wz = W_tot
         small_radious = (1 + 2*alpha) * r
+        small_radious = small_radious * small_radious
         big_radious = (3 + 4*alpha) * r
+        big_radious = big_radious * big_radious
         guesses += 1
         while len(S) < k and Wz > 0:
             max_ball_weight = 0
@@ -85,18 +94,21 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
 # distances, and return the largest among the remaining ones. Note that in this case we are not
 # using weights!
 def ComputeObjective(P,S,z):
-    distances = []
+    distances = {}
+    ind = 0
     for p in P:
-        min_dist = 100
+        min_dist = 1000
         for s in S:
-            dist = euclidean(p, s)
+            dist = euclideanWithoutSqrt(p, s)
             if min_dist > dist:
                 min_dist = dist
-        distances.append(min_dist)
+        distances[ind] = math.sqrt(min_dist)
+        ind += 1
     if z > 0:
-        distances.sort()
-        distances = distances[:-z].copy()
-    return max(distances)
+        distances = {k: v for k, v in sorted(distances.items(), key=lambda item: item[1])}
+        for i in range(z):
+            distances.popitem()
+    return max(distances.values())
 
 
 def main():
