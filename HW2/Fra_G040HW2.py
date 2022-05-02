@@ -27,9 +27,8 @@ def euclideanWithoutSqrt(point1,point2):
 
 def SeqWeightedOutliers(P, W, k, z, alpha):
     N = len(P)
-    distances = {}
-    ind = 0
-    min_dist = 1000
+    count = 0
+    min_dist = -1
     # create the dictionary that contains all the euclidean distances between points
     # without computing the square root
     distances = np.zeros((N,N))
@@ -38,10 +37,10 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
             dist = euclideanWithoutSqrt(P[i], P[j])
             distances[i][j] = dist
             distances[j][i] = dist
-            if ind <= k + z:
-                if dist < min_dist:
+            if count <= k + z:
+                if min_dist == -1 or dist < min_dist:
                     min_dist = dist
-                ind += 1
+                count += 1
     # r shoudl be equal to (the min euclidean distance between first k + z + 1 points)/2
     r = math.sqrt(min_dist)/2
     print("Initial guess =", r)
@@ -94,21 +93,18 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
 # distances, and return the largest among the remaining ones. Note that in this case we are not
 # using weights!
 def ComputeObjective(P,S,z):
-    distances = {}
-    ind = 0
+    distances = []
     for p in P:
-        min_dist = 1000
+        min_dist = -1
         for s in S:
             dist = euclideanWithoutSqrt(p, s)
-            if min_dist > dist:
+            if min_dist == -1 or min_dist > dist:
                 min_dist = dist
-        distances[ind] = math.sqrt(min_dist)
-        ind += 1
-    if z > 0:
-        distances = {k: v for k, v in sorted(distances.items(), key=lambda item: item[1])}
-        for i in range(z):
-            distances.popitem()
-    return max(distances.values())
+        distances.append(math.sqrt(min_dist))
+    distances.sort()
+    for i in range(z):
+        distances.pop()
+    return distances[-1]
 
 
 def main():
