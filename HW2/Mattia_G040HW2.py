@@ -1,51 +1,40 @@
-import sys, math, time
-
-# TODO: try using numpy, which is not available in room Ge
-
-
-
-def dist(x, y):
-	# return math.hypot(*(x[i] - y[i] for i in range(len(x))))
-	out = 0
-
-	for i in range(len(x)):
-		diff = x[i] - y[i]
-		out += diff * diff
-
-	return math.sqrt(out)
+import sys, time
+import numpy as np
+import numpy.ma as ma
 
 
 
 def SeqWeightedOutliers(P, W, k, z, alpha):
-	d = tuple(tuple(dist(x, y) for y in P) for x in P)
-	rmin = r = min(min(*l[:i], *l[i+1:k+z+1]) for i, l in enumerate(d[:k+z+1])) / 2
-	guesses = 1
+	d = np.ndarray((len(P), len(P)), dtype=P.dtype)
+	
+	for i, l in enumerate(d):
+		l[:] = np.square(P - P[i]).sum(1)
 
-	def ball(j, r):
-		return (i for i in Z if d[j][i] <= r)
+	rmin = r = np.sqrt(min(filter(None, d[:k+z+1, :k+z+1].flat)) / 4)
+	guesses = 1
+	
+	q = np.zeros(d.shape, dtype=bool)
+	w = np.zeros(d[0].shape, dtype=bool)
+	Z = np.zeros_like(W)
 
 	while True:
-		Z = set(range(len(P)))
-		S = set()
-		WZ = sum(W)
+		Z[:] = W
+		S = []
 
-		while len(S) < k and WZ > 0:
-			mx = 0
+		lr = (3 + 4 * alpha) * r
+		lr *= lr
 
-			for x in range(len(P)):
-				ball_weight = sum(W[i] for i in ball(x, (1 + 2 * alpha) * r))\
+		np.less_equal(d, np.square((1 + 2 * alpha) * r), out=q)
 
-				if ball_weight > mx:
-					mx = ball_weight
-					newcenter = x
+		for _ in range(k):
+			if not Z.any():
+				break
 
-			S.add(newcenter)
+			newcenter = np.fromiter((Z[l].sum() for l in q), Z.dtype).argmax()
+			S.append(newcenter)
+			Z[np.less_equal(d[newcenter], lr, out=w)] = 0
 
-			for y in tuple(ball(newcenter, (3 + 4 * alpha) * r)):
-				Z.discard(y)
-				WZ -= W[y]
-
-		if WZ <= z:
+		if Z.sum() <= z:
 			return (rmin, r, guesses, S)
 
 		r *= 2
@@ -55,12 +44,12 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
 
 def ComputeObjective(P, S, z):
 	S = S[3]
-	return sorted((min(dist(x, P[y]) for y in S) for x in P), reverse=True)[z]
+	return sorted((np.linalg.norm(P[S] - x, axis=1).min() for x in P), reverse=True)[z]
 
 
 
 def main(inputPoints, k, z):
-	weights = [1 for _ in inputPoints]
+	weights = np.ones(len(inputPoints), dtype=np.float64)
 	pre = time.process_time()
 	solution = SeqWeightedOutliers(inputPoints, weights, k, z, 0)
 	post = time.process_time()
@@ -103,14 +92,13 @@ if __name__ == "__main__":
 			exit(-1)
 
 	try:
-		with open(fil) as f:
-			inputPoints = [parse_line(*line) for line in enumerate(f)]
-	except FileNotFoundError:
+		inputPoints = np.genfromtxt(fil, delimiter=',')
+	except OSError:
 		print(f"Input file not found: {fil}", file=sys.stderr)
 		exit(-1)
-
-	if len({len(x) for x in inputPoints}) != 1:
-		print(f"Empty file or inconsistent number of dimensions in file", file=sys.stderr)
+	
+	if np.isnan(inputPoints).any():
+		print(f"Invalid line in file: {np.where(inputPoints)[0][0]}", file=sys.stderr)
 		exit(-1)
 
 	main(inputPoints, k, z)
