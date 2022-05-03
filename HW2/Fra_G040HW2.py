@@ -27,20 +27,18 @@ def euclideanWithoutSqrt(point1,point2):
 
 def SeqWeightedOutliers(P, W, k, z, alpha):
     N = len(P)
-    count = 0
     min_dist = -1
-    # create the dictionary that contains all the euclidean distances between points
+    # create a list of lists that contains all the euclidean distances between different points
     # without computing the square root
-    distances = np.zeros((N,N))
+    distances1 = []
     for i in range(N):
+        distances2 = []
         for j in range(i+1, N):
             dist = euclideanWithoutSqrt(P[i], P[j])
-            distances[i][j] = dist
-            distances[j][i] = dist
-            if count <= k + z:
-                if min_dist == -1 or dist < min_dist:
-                    min_dist = dist
-                count += 1
+            distances2.append(dist)
+            if i <= k+z and j <= k+z and (min_dist == -1 or dist < min_dist):
+                min_dist = dist
+        distances1.append(distances2)
     # r shoudl be equal to (the min euclidean distance between first k + z + 1 points)/2
     r = math.sqrt(min_dist)/2
     print("Initial guess =", r)
@@ -65,8 +63,15 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
                 # compute the weight of the small ball with center "point"
                 for uncov_point_ind in range(N):
                     uncov_point = P[uncov_point_ind]
-                    if Z[uncov_point] == True and distances[point_ind][uncov_point_ind] <= small_radious:
-                        ball_weight += W[uncov_point_ind]
+                    if uncov_point_ind == point_ind:
+                        if Z[uncov_point] == True:
+                            ball_weight += W[uncov_point_ind]
+                    elif uncov_point_ind < point_ind:
+                        if Z[uncov_point] == True and distances1[uncov_point_ind][point_ind-uncov_point_ind-1] <= small_radious:
+                            ball_weight += W[uncov_point_ind]
+                    elif uncov_point_ind > point_ind:
+                        if Z[uncov_point] == True and distances1[point_ind][uncov_point_ind-point_ind-1] <= small_radious:
+                            ball_weight += W[uncov_point_ind]
                 if ball_weight > max_ball_weight:
                     max_ball_weight = ball_weight
                     new_center_ind = point_ind
@@ -76,9 +81,18 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
                 S.append(new_center)
                 for uncov_point_ind in range(N):
                     uncov_point = P[uncov_point_ind]
-                    if Z[uncov_point] == True and distances[new_center_ind][uncov_point_ind] <= big_radious:
-                        Z[uncov_point] = False
-                        Wz -= W[uncov_point_ind]
+                    if uncov_point_ind == new_center_ind:
+                        if Z[uncov_point] == True:
+                            Z[uncov_point] = False
+                            Wz -= W[uncov_point_ind]
+                    elif new_center_ind < uncov_point_ind:
+                        if Z[uncov_point] == True and distances1[new_center_ind][uncov_point_ind-new_center_ind-1] <= big_radious:
+                            Z[uncov_point] = False
+                            Wz -= W[uncov_point_ind]
+                    elif uncov_point_ind < new_center_ind:
+                        if Z[uncov_point] == True and distances1[uncov_point_ind][new_center_ind-uncov_point_ind-1] <= big_radious:
+                            Z[uncov_point] = False
+                            Wz -= W[uncov_point_ind]
             else:
                 break
         if Wz > z:
