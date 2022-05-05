@@ -2,7 +2,6 @@ import time
 import sys
 import math
 import os
-import numpy as np
 
 def readVectorsSeq(filename):
     with open(filename) as f:
@@ -59,19 +58,17 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
             new_center_ind = -1
             # search one of the k centers which maximise the weight of the points around it
             for point_ind in range(N):
-                ball_weight = 0
+                ball_weight = W[point_ind]
                 # compute the weight of the small ball with center "point"
                 for uncov_point_ind in range(N):
                     uncov_point = P[uncov_point_ind]
-                    if uncov_point_ind == point_ind:
-                        if Z[uncov_point] == True:
-                            ball_weight += W[uncov_point_ind]
-                    elif uncov_point_ind < point_ind:
-                        if Z[uncov_point] == True and distances1[uncov_point_ind][point_ind-uncov_point_ind-1] <= small_radious:
-                            ball_weight += W[uncov_point_ind]
-                    elif uncov_point_ind > point_ind:
-                        if Z[uncov_point] == True and distances1[point_ind][uncov_point_ind-point_ind-1] <= small_radious:
-                            ball_weight += W[uncov_point_ind]
+                    if Z[uncov_point] == True:
+                        if uncov_point_ind < point_ind:
+                            if distances1[uncov_point_ind][point_ind-uncov_point_ind-1] <= small_radious:
+                                ball_weight += W[uncov_point_ind]
+                        elif uncov_point_ind > point_ind:
+                            if distances1[point_ind][uncov_point_ind-point_ind-1] <= small_radious:
+                                ball_weight += W[uncov_point_ind]
                 if ball_weight > max_ball_weight:
                     max_ball_weight = ball_weight
                     new_center_ind = point_ind
@@ -79,20 +76,19 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
                 # add the new center found in S, remove the points inside the largest ball from Z and update the total weights
                 new_center = P[new_center_ind]
                 S.append(new_center)
+                Z[new_center] = False
+                Wz -= W[new_center_ind]
                 for uncov_point_ind in range(N):
                     uncov_point = P[uncov_point_ind]
-                    if uncov_point_ind == new_center_ind:
-                        if Z[uncov_point] == True:
-                            Z[uncov_point] = False
-                            Wz -= W[uncov_point_ind]
-                    elif new_center_ind < uncov_point_ind:
-                        if Z[uncov_point] == True and distances1[new_center_ind][uncov_point_ind-new_center_ind-1] <= big_radious:
-                            Z[uncov_point] = False
-                            Wz -= W[uncov_point_ind]
-                    elif uncov_point_ind < new_center_ind:
-                        if Z[uncov_point] == True and distances1[uncov_point_ind][new_center_ind-uncov_point_ind-1] <= big_radious:
-                            Z[uncov_point] = False
-                            Wz -= W[uncov_point_ind]
+                    if Z[uncov_point] == True:
+                        if new_center_ind < uncov_point_ind:
+                            if distances1[new_center_ind][uncov_point_ind-new_center_ind-1] <= big_radious:
+                                Z[uncov_point] = False
+                                Wz -= W[uncov_point_ind]
+                        elif uncov_point_ind < new_center_ind:
+                            if distances1[uncov_point_ind][new_center_ind-uncov_point_ind-1] <= big_radious:
+                                Z[uncov_point] = False
+                                Wz -= W[uncov_point_ind]
             else:
                 break
         if Wz > z:
