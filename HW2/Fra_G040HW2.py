@@ -32,11 +32,11 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
     # without computing the square root
     distances1 = []
     for i in range(N):
-        distances2 = []
-        for j in range(i+1, N):
+        distances2 = [0] * N
+        for j in range(N):
             dist = euclideanWithoutSqrt(P[i], P[j])
-            distances2.append(dist)
-            if i <= k+z and j <= k+z and (min_dist == -1 or dist < min_dist):
+            distances2[j] = dist
+            if i <= k+z and j <= k+z and dist > 0 and (min_dist == -1 or dist < min_dist):
                 min_dist = dist
         distances1.append(distances2)
     # r shoudl be equal to (the min euclidean distance between first k + z + 1 points)/2
@@ -64,16 +64,8 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
                 for uncov_point_ind in range(N):
                     uncov_point = P[uncov_point_ind]
                     if Z[uncov_point] == True:
-                        dist = 0
-                        if uncov_point_ind < point_ind:
-                            dist = distances1[uncov_point_ind][point_ind-uncov_point_ind-1]
-                            if dist <= small_radious:
-                                ball_weight += W[uncov_point_ind]
-                        elif uncov_point_ind > point_ind:
-                            dist = distances1[point_ind][uncov_point_ind-point_ind-1]
-                            if dist <= small_radious:
-                                ball_weight += W[uncov_point_ind]
-                        else:
+                        dist = distances1[uncov_point_ind][point_ind]
+                        if dist <= small_radious:
                             ball_weight += W[uncov_point_ind]
                 if ball_weight > max_ball_weight:
                     max_ball_weight = ball_weight
@@ -87,14 +79,10 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
                 for uncov_point_ind in range(N):
                     uncov_point = P[uncov_point_ind]
                     if Z[uncov_point] == True:
-                        if new_center_ind < uncov_point_ind:
-                            if distances1[new_center_ind][uncov_point_ind-new_center_ind-1] <= big_radious:
-                                Z[uncov_point] = False
-                                Wz -= W[uncov_point_ind]
-                        elif uncov_point_ind < new_center_ind:
-                            if distances1[uncov_point_ind][new_center_ind-uncov_point_ind-1] <= big_radious:
-                                Z[uncov_point] = False
-                                Wz -= W[uncov_point_ind]
+                        dist = distances1[new_center_ind][uncov_point_ind]
+                        if dist <= big_radious:
+                            Z[uncov_point] = False
+                            Wz -= W[uncov_point_ind]
             else:
                 break
         if Wz > z:

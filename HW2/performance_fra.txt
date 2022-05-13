@@ -1,14 +1,14 @@
 artificial9000.txt k=9 z=0
-Time of SeqWeightedOutliers = 335335.33477783203 ms
+Time of SeqWeightedOutliers = 299857.5735092163 ms
 
 artificial9000.txt k=9 z=200
-Time of SeqWeightedOutliers = 741031.8217277527 ms
+Time of SeqWeightedOutliers = 618926.2442588806 ms
 
 artificial9000.txt k=9 z=300
-Time of SeqWeightedOutliers = 1071971.0745811462 ms
+Time of SeqWeightedOutliers = 867552.5333881378 ms
 
 uber-small.csv k=10 z=0
-Time of SeqWeightedOutliers = 6397.749423980713 ms
+Time of SeqWeightedOutliers = 5590.2159214019775 ms
 
 uber-small.csv k=10 z=100
-Time of SeqWeightedOutliers = 10539.76821899414 ms
+Time of SeqWeightedOutliers = 8262.760639190674 ms
