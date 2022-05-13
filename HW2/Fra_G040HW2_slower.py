@@ -45,11 +45,8 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
     Wz = z + 1
     guesses = 0
     W_tot = sum(W)
-    Z_map = {}
-    for point_ind in range(N):
-        Z_map[P[point_ind]] = point_ind
     while Wz > z:
-        Z = P.copy()
+        Z = dict.fromkeys(P, True)
         S = []
         Wz = W_tot
         small_radious = (1 + 2*alpha) * r
@@ -64,11 +61,12 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
             for point_ind in range(N):
                 ball_weight = 0
                 # compute the weight of the small ball with center "point"
-                for uncov_point in Z:
-                    uncov_point_ind = Z_map[uncov_point]
-                    dist = distances1[point_ind][uncov_point_ind]
-                    if dist <= small_radious:
-                        ball_weight += W[uncov_point_ind]
+                for uncov_point_ind in range(N):
+                    uncov_point = P[uncov_point_ind]
+                    if Z[uncov_point] == True:
+                        dist = distances1[uncov_point_ind][point_ind]
+                        if dist <= small_radious:
+                            ball_weight += W[uncov_point_ind]
                 if ball_weight > max_ball_weight:
                     max_ball_weight = ball_weight
                     new_center_ind = point_ind
@@ -76,12 +74,14 @@ def SeqWeightedOutliers(P, W, k, z, alpha):
                 # add the new center found in S, remove the points inside the largest ball from Z and update the total weights
                 new_center = P[new_center_ind]
                 S.append(new_center)
+                Z[new_center] = False
+                Wz -= W[new_center_ind]
                 for uncov_point_ind in range(N):
                     uncov_point = P[uncov_point_ind]
-                    if uncov_point in Z:
+                    if Z[uncov_point] == True:
                         dist = distances1[new_center_ind][uncov_point_ind]
                         if dist <= big_radious:
-                            Z.remove(uncov_point)
+                            Z[uncov_point] = False
                             Wz -= W[uncov_point_ind]
             else:
                 break
