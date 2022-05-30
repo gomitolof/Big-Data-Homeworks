@@ -1,0 +1,21 @@
+- password: bdc_hw3_040
+
+- list datasets: hdfs dfs -ls /data/BDC2122
+Uploading jobs (Python users). You must upload your program (e.g., GxxxHW3.py) to the group's account on the cluster (e.g., groupXXX). To do so you must use again one of the group members' account on a unipd machine (e.g, account-name@login.dei.unipd.it) and do the following:
+
+- Transfer GxxxHW3.py to account-name@login.dei.unipd.it: you can use scp (on Linux and MacOS) or pscp (on Windows, installed along with Putty).
+Connect to account-name@login.dei.unipd.it and from there type the command:scp -P 2222 GxxxHW3.py groupXXX@147.162.226.106:. Please, in this last transfer make sure you use the option -P 2222 with capital P.
+Note that, if you are doing the access from one of the virtual machines that we provided or from a machine on the unipd network, you can directly copy the .py file from your machine to 147.162.226.106 via scp.
+
+- Running jobs (Python users). Suppose that on the cluster's frontend you uploaded your Homework 3 program GxxxHW3.py. In order to run the program, login to the frontend (as explained before) and type the following command
+
+spark-submit --num-executors X GxxxHW3.py argument-list
+
+Note that by default Spark runs Python 2. If your code requires Python 3, you can invoke spark-submit as follows:
+
+spark-submit --conf spark.pyspark.python=python3 --num-executors X GxxxHW3.py argument-list
+
+## Command-line options and parameters (both Java and Python users).
+
+Option num-executors sets the total number of executors used by the application (i.e., workers in MapReduce terminology) to the specified value (X in the example). Each executor will run on a core with 2 GB of RAM. In the homework, we will give you an upper limit to the value X that you can specify, which is lower than the maximum parallelism available in the cluster to ensure a fair sharing of the resources among the student groups.
+argument list: depends on the program that you are running. To pass one of the preloaded files as an argument to the program specify the path /data/BDC2122/filename

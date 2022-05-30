@@ -24,7 +24,7 @@ def main():
     end = 0
 
     # Set Spark Configuration
-    conf = SparkConf().setAppName('MR k-center with outliers').setMaster("local[*]")
+    conf = SparkConf().setAppName('MR k-center with outliers').setMaster("yarn")
     sc = SparkContext(conf=conf)
     sc.setLogLevel("WARN")
 
@@ -44,6 +44,7 @@ def main():
 
     # Solve the problem
     solution = MR_kCenterOutliers(inputPoints, k, z, L)
+
     # Compute the value of the objective function
     start = time.time()
     objective = computeObjective(inputPoints, solution, z)
@@ -100,11 +101,8 @@ def MR_kCenterOutliers(points, k, z, L):
 
     
     #------------- ROUND 1 ---------------------------
-    # extracts k+z+1 coreset points from each partition using method kCenterFFT which
-    # implements the Farthest-First Traversal algorithm, and compute the weights of the
-    # coreset points using method computeWeights
     start = time.time()
-    coreset = points.mapPartitions(lambda iter: extractCoreset(iter, k+z+1))
+    coreset = points.mapPartitions(lambda iterator: extractCoreset(iterator, k+z+1))
     coreset.first()
     end = time.time()
     print("Time taken by Round 1: ", str((end-start)*1000), " ms")
@@ -112,9 +110,6 @@ def MR_kCenterOutliers(points, k, z, L):
 
     
     #------------- ROUND 2 ---------------------------
-    # collects the weighted coreset into a local data structure and runs method
-    # SeqWeightedOutliers, "recycled" from Homework 2, to extract and return the final
-    # set of centers (you must fill in this latter part).    
     start = time.time()
     elems = coreset.collect()
     coresetPoints = list()
@@ -131,6 +126,7 @@ def MR_kCenterOutliers(points, k, z, L):
     end = time.time()
     print("Time taken by Round 2: ", str((end-start)*1000), " ms")
     return solution
+     
    
 
 # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -189,6 +185,8 @@ def computeWeights(points, centers):
                 mycenter = i
         weights[mycenter] = weights[mycenter] + 1
     return weights
+
+
 
 # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 # Method SeqWeightedOutliers: sequential k-center with outliers
@@ -277,6 +275,7 @@ def computeObjective(points, centers, z):
 #
     distances = points.mapPartitions(lambda iter: computeDistances(iter, centers)).top(z+1)
     return distances[-1]
+
 
 
 
