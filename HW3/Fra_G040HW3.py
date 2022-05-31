@@ -24,7 +24,7 @@ def main():
     end = 0
 
     # Set Spark Configuration
-    conf = SparkConf().setAppName('MR k-center with outliers').setMaster("yarn")
+    conf = SparkConf().setAppName('MR k-center with outliers').setMaster("local[*]")
     sc = SparkContext(conf=conf)
     sc.setLogLevel("WARN")
 
@@ -101,9 +101,10 @@ def MR_kCenterOutliers(points, k, z, L):
 
     
     #------------- ROUND 1 ---------------------------
+    points.first()
     start = time.time()
     coreset = points.mapPartitions(lambda iterator: extractCoreset(iterator, k+z+1))
-    coreset.first()
+    elems = coreset.collect()
     end = time.time()
     print("Time taken by Round 1: ", str((end-start)*1000), " ms")
     # END OF ROUND 1
@@ -111,7 +112,6 @@ def MR_kCenterOutliers(points, k, z, L):
     
     #------------- ROUND 2 ---------------------------
     start = time.time()
-    elems = coreset.collect()
     coresetPoints = list()
     coresetWeights = list()
     for i in elems:

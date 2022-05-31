@@ -149,7 +149,7 @@ def main():
     # set of (at most) k centers. The output of the method must be
     # saved into a list of tuple in Python called solution.
     start_time = time.time()
-    solution = SeqWeightedOutliers(inputPoints,weights,k,z,0)
+    solution = SeqWeightedOutliers(inputPoints,weights,k,z,2)
     time_spent = time.time() - start_time
 
     objective = ComputeObjective(inputPoints,solution,z)
