@@ -6,6 +6,9 @@ import random
 import sys
 import math
 
+# Parts of the original file were altered for optimization purposes.
+# The algorithm itself was not changed.
+
 # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 # MAIN PROGRAM
