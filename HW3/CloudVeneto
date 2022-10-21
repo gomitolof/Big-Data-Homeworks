@@ -1,5 +1,3 @@
-- password: bdc_hw3_040
-
 - list datasets: hdfs dfs -ls /data/BDC2122
 Uploading jobs (Python users). You must upload your program (e.g., GxxxHW3.py) to the group's account on the cluster (e.g., groupXXX). To do so you must use again one of the group members' account on a unipd machine (e.g, account-name@login.dei.unipd.it) and do the following:
 
